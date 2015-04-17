@@ -1,0 +1,315 @@
+%----------------reading the image-----------------------------------%
+clc;
+close all;
+clear all;
+featurei=rand(1,7)
+
+for x=1:1:1
+    im=imread(strcat('Patient 1(tumor)\',int2str(x),'.jpg'));
+im1=im2double(im);
+% figure(1);
+% imshow(im1);
+title('original image');
+[width, height]=size(im);
+
+%---------preprocessing----------------%
+%---------------------gray image-------------------------------------%
+mat=rgb2gray(im);
+% figure(2);
+imshow(mat);
+[width height]=size(mat);
+
+%--------------------negative image----------------------------------%
+I=imcomplement(mat);
+% figure(3);
+% imshow(I);
+title('negative image');
+%--------------------logarithmic-------------------------------------%
+c=1;
+for i=1:width
+    for j=1:height
+        l=log(1+im2double(im(i,j)));
+        logtr(i,j)=c*l;
+    end
+end
+% figure(4);
+% imshow(logtr);
+title('logarithmic image');
+%-------------------converting image to 256*256---------------------%
+
+% fprintf('enter the size of mask = ')
+% t=input('');
+t=11;
+for i=1:t
+    for j=1:t
+       
+        msk(i,j)=(1/(t^2));
+    end
+end
+
+[m n]=size(mat);
+
+    z=(t-1)/2;
+    subimage=[zeros(z,n);mat ;zeros(z,n)];
+    [p q]=size(subimage);
+    subimage=[zeros(p,z),subimage,zeros(p,z)];
+
+a=1;
+b=1;
+u=t;
+v=t;
+image=zeros(m,n);
+for g=1:m
+    for f=1:n
+ x=1;
+ y=1;
+for i=a:u
+    for j=b:v
+        subim(x,y)=subimage(i,j);
+y=y+1;
+    end
+    x=x+1;
+    y=1;
+end
+em=(msk).* double((subim));
+image=sum(em);
+image=sum(image);
+ima(g,f)=uint8(image);
+
+b=b+1;
+v=v+1;
+    end
+b=1;
+v=t;
+a=a+1;
+u=u+1;
+end
+
+% figure(5);
+% imshow(ima);
+title('smooth image')
+%----------------------------------sharpened image------------------%
+for i=1:m
+    for j=1:n
+        sharp(i,j)=mat(i,j)-ima(i,j);
+        sharp(i,j)=uint8(sharp(i,j));
+    end
+end
+% figure(6);
+% imshow(sharp);
+title('sharp image');
+%--------histogram equalisation--------------------------------------%
+% figure;
+imhist(mat);
+J = histeq(mat);
+% figure(7);
+% imshow(J);
+% figure;
+imhist(J);
+%------------------binarization--------------------------------------%
+%-----convert image into binary using threshold----------------------%
+threshold = graythresh(mat);
+%---------Convert image to binary image, based on threshold----------%
+binary= im2bw(mat,threshold);
+binary=imfill(binary,'holes');
+%--remove small objects from binary image that have fewer than 10 pixels--
+% bin= bwareaopen(binary,10);
+% figure;
+% imshow(binary);
+%-------multiply original image and mask-----------------------------%
+immul=immultiply(binary,mat);
+% figure(8);
+% imshow(immul);
+% imshow(immul);
+beta=0.5;brighten(beta);
+title('pixel value');
+%-----convert image into binary using threshold-----------------------%
+threshold = graythresh(mat);
+%---------Convert image to binary image, based on threshold-----------%
+binary= im2bw(mat,threshold);
+binary=imfill(binary,'holes');
+%-----------thresholding----------------------------------------------%
+% 
+% T=imread('im07.jpg');  
+% figure;
+% imshow(T);
+%  [m, n]=size(T);
+% img=im2double(T);
+
+for i=1:m
+    for j=1:n
+        if(im1(i,j)>160)
+            img(i,j)=1;
+        else
+            img(i,j)=0;
+        end
+    end
+end
+% figure(10);
+% imshow(img);
+% [m1 n1]=size(img);
+% mat=rgb2gray(T);
+title('thresholding image');
+%----------morphological operation-----------------------------------%
+Thresh=160; % threshold
+% filename= 'im07.jpg'; % the file to be read
+% im=imread(filename);
+imM=imresize(im, [256 256]);
+% figure(12);
+imagesc(imM);  % display
+axis('square');
+colormap('gray');
+
+im1=uint8(imM); 
+LEVEL=Thresh/255.0;
+BW = im2bw(im1,LEVEL); %converts the intensity image I to black and white.
+
+%--------------------------dilation-----------------------------------%
+
+K3=ones(3); K5=ones(5); K7=ones(7); K9=ones(9);
+
+B3=imdilate(BW,K3);
+B5=imdilate(BW,K5);
+B7=imdilate(BW,K7);
+B9=imdilate(BW,K9);
+
+
+% figure(13);
+imagesc(B3);  % display
+axis('square');
+colormap('gray');
+title('dillation 1');
+
+% figure(14);
+imagesc(B5);  % display
+axis('square');
+colormap('gray');
+title('dilation 2');
+
+% figure(15);
+imagesc(B7); 
+axis('square');
+colormap('gray');
+title('dillation 3');
+
+% figure(16);
+imagesc(B9);  
+axis('square');
+colormap('gray');
+title('dillation 4');
+
+im1=uint8(imM); 
+BW = im2bw(im1,LEVEL); 
+%------------------erosion---------------------------------------%
+
+K3=ones(3); K5=ones(5); K7=ones(7); K9=ones(9);
+
+B3=imerode(BW,K3);
+B5=imerode(BW,K5);
+B7=imerode(BW,K7);
+B9=imerode(BW,K9);
+
+% figure(17);
+imagesc(BW); 
+axis('square');
+colormap('gray');
+title('erosion 1');
+
+% figure(18);
+imagesc(B3);  
+axis('square');
+colormap('gray');
+title('erosion 2');
+
+% figure(19);
+imagesc(B5); 
+axis('square');
+colormap('gray');
+title('erosion 3');
+
+
+% figure(20);
+imagesc(B7);  
+axis('square');
+colormap('gray');
+title('erosion 4');
+
+% figure(21);
+imagesc(B9);  
+axis('square');
+colormap('gray');
+title('erosion 5');
+
+im1=uint8(imM); 
+BW = im2bw(im1,LEVEL); 
+% saveas(21,'D:\DIP\erode images\im_07.png');
+
+%----------------opening-----------------------------------%
+
+op=bwmorph(BW,'open');
+figure(22);
+imagesc(op);  
+axis('square');
+colormap('gray');
+title('opening image');
+im1=uint8(imM); 
+BW = im2bw(im1,LEVEL); 
+
+%----------------closing------------------------------------%
+op=bwmorph(BW,'close');
+figure(23);
+imagesc(op); 
+axis('square');
+colormap('gray');
+title('closing image');
+
+im1=uint8(imM); 
+BW = im2bw(im1,LEVEL); 
+
+%-------------------thinning--------------------------------%
+op=bwmorph(BW,'thin');
+% figure(24);
+imagesc(op); 
+axis('square');
+colormap('gray');
+title('thinning image');
+
+im1=uint8(imM); 
+BW = im2bw(im1,LEVEL); 
+
+%----------------------thickening----------------------------%
+op=bwmorph(BW,'thick');
+% figure(25);
+imagesc(op); 
+axis('square');
+colormap('gray');
+title('thickening image');
+
+%------------------feature extraction----------------------------%
+glcm = graycomatrix(op)
+stats = graycoprops(glcm,{'contrast','homogeneity', 'correlation', 'energy'})
+
+X=double(op);
+myrange=getrangefromclass(X);
+newmax=myrange(2);
+newmin=myrange(1);
+norm=(X-min(X(:)))*(newmax-newmin)/(max(X(:))-min(X(:)))+newmin;
+figure;
+imshow(norm);
+
+M1=mean2(norm)
+S1=std2(norm)
+G1=im2bw(norm,0.8)
+A1=bwarea(G1)
+E1=entropy(norm);
+%h1=imhist(Im1);
+K1=skewness(norm)
+feature0=featurei;
+ feature=[stats.Contrast stats.Correlation stats.Energy stats.Homogeneity M1 S1 E1];
+ 
+ featurei=[feature0;feature]
+
+end
+ [r,c]=size(featurei)
+ featuremat=featurei(2:r,:)
+ save featuremat
